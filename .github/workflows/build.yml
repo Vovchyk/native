@@ -1,0 +1,33 @@
+name: Build on pull request against master
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Set Java 8 up
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Build docker container
+        run: docker build -t native-libs .
+
+      - name: Build native library
+        run: docker run --rm -v $(pwd)/build:/native/build native-libs
+
+      - name: Print checksums
+        run: sha256sum ./build/libs/*
+
+      - name: Archive artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          path: ./build/libs/*
